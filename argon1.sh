@@ -18,7 +18,7 @@ argon_check_pkg() {
     fi
 }
 
-pkglist=(raspi-gpio python-rpi.gpio python3-rpi.gpio python-smbus python3-smbus i2c-tools)
+pkglist=(wiringpi python3-rpi.gpio python3-smbus i2c-tools)
 for curpkg in ${pkglist[@]}; do
 	sudo apt-get install -y $curpkg
 	RESULT=$(argon_check_pkg "$curpkg")
@@ -42,8 +42,8 @@ removescript=/usr/bin/argonone-uninstall
 
 daemonfanservice=/lib/systemd/system/$daemonname.service
 
-sudo raspi-config nonint do_i2c 0
-sudo raspi-config nonint do_serial 0	
+#sudo raspi-config nonint do_i2c 0
+#sudo raspi-config nonint do_serial 0	
 	
 if [ ! -f $daemonconfigfile ]; then
 	# Generate config file for fan speed
@@ -77,7 +77,7 @@ fi
 # Generate script that runs every shutdown event
 argon_create_file $shutdownscript
 
-echo "#!/usr/bin/python" >> $shutdownscript
+echo "#!/usr/bin/python3" >> $shutdownscript
 echo 'import sys' >> $shutdownscript
 echo 'import smbus' >> $shutdownscript
 echo 'import RPi.GPIO as GPIO' >> $shutdownscript
@@ -100,7 +100,7 @@ sudo chmod 755 $shutdownscript
 
 argon_create_file $powerbuttonscript
 
-echo "#!/usr/bin/python" >> $powerbuttonscript
+echo "#!/usr/bin/python3" >> $powerbuttonscript
 echo 'import smbus' >> $powerbuttonscript
 echo 'import RPi.GPIO as GPIO' >> $powerbuttonscript
 echo 'import os' >> $powerbuttonscript
@@ -183,9 +183,8 @@ echo '		fanconfig = tmpconfig' >> $powerbuttonscript
 echo '	address=0x1a' >> $powerbuttonscript
 echo '	prevblock=0' >> $powerbuttonscript
 echo '	while True:' >> $powerbuttonscript
-echo '		temp = os.popen("vcgencmd measure_temp").readline()' >> $powerbuttonscript
-echo '		temp = temp.replace("temp=","")' >> $powerbuttonscript
-echo '		val = float(temp.replace("'"'"'C",""))' >> $powerbuttonscript
+echo '		temp = os.popen("cat /sys/class/thermal/thermal_zone0/temp").readline()' >> $powerbuttonscript
+echo '		val = float(int(temp) / 1000)' >> $powerbuttonscript
 echo '		block = get_fanspeed(val, fanconfig)' >> $powerbuttonscript
 echo '		if block < prevblock:' >> $powerbuttonscript
 echo '			time.sleep(30)' >> $powerbuttonscript
